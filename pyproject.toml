@@ -1,0 +1,28 @@
+[tool.poetry]
+name = "channest"
+version = "1.0"
+description = "Package for estimating channel parameters for ResQml models converted by nrresqml"
+authors = ["Norwegian Computing Center"]
+license = "GPLv3"
+classifiers = [
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.8",
+        "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+        "Operating System :: OS Independent",
+]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+scipy = "~1.9.3"
+numpy = "~1.20.3"
+shapely = "~1.8.5"
+alphashape = "~1.3.1"
+pydap = "~3.4.1"
+scikit-image = "~0.19.3"
+plotly = "~5.16.1"
+nrresqml = {git = "https://github.com/equinor/nrresqml", rev = "v1.0.1"}
+tqdm = "~4.66.1"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
