@@ -12,7 +12,7 @@ def _find_image_skeleton(poly):
     full_set = shapely.geometry.MultiPoint([(i, j) for i in range(n0) for j in range(n1)])
     poly_set = full_set.intersection(poly)
     poly_map = np.zeros((n0, n1))
-    idx = np.array(poly_set).astype(np.int)
+    idx = np.array(poly_set).astype(int)
     poly_map[idx[:, 0], idx[:, 1]] = 1
     skel_map = skimage.morphology.skeletonize(poly_map)
     return skel_map

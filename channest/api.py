@@ -166,7 +166,7 @@ def calculate_channel_parameters(settings: Union[Dict[str, Any], str], output_di
         # Widths
         poly_widths = [
             widths.LayerWidths(_sp,
-                               (_p.map2d > et).astype(np.float),
+                               (_p.map2d > et).astype(float),
                                s.mean_map_threshold,
                                s.turn_off_filters)
             for _p, _sp in progress(zip(polys, poly_skels),
