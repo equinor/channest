@@ -6,8 +6,12 @@ from channest.heights import LayerHeights
 
 
 def create_stacking_plot(fn: str, heights: List[LayerHeights]):
-    _generate_stacking_plot(fn + '_skeleton', _generate_stacking_data(heights, 'height_map'))
-    _generate_stacking_plot(fn + '_full', _generate_stacking_data(heights, 'vertical_distance_map'))
+    _generate_stacking_plot(
+        fn + "_skeleton", _generate_stacking_data(heights, "height_map")
+    )
+    _generate_stacking_plot(
+        fn + "_full", _generate_stacking_data(heights, "vertical_distance_map")
+    )
 
 
 def _generate_stacking_data(heights: List[LayerHeights], property_name: str):
@@ -18,7 +22,9 @@ def _generate_stacking_data(heights: List[LayerHeights], property_name: str):
         if len(layer.heights) == 0:
             merged_hm = np.zeros((nx, ny))
         else:
-            merged_hm = np.sum(np.dstack([getattr(h, property_name) for h in layer.heights]), axis=-1)
+            merged_hm = np.sum(
+                np.dstack([getattr(h, property_name) for h in layer.heights]), axis=-1
+            )
         is_data.append(merged_hm > 0)
         hh_data.append(merged_hm)
     is_data = np.array(is_data)
@@ -31,7 +37,7 @@ def _distance_to_mouth(data: np.ndarray):
     # Highly specialized and only applicable to "full box" cases
     nx, ny = data.shape[1:]
     ci, cj = 0, ny / 2
-    ii, jj = np.meshgrid(np.arange(nx), np.arange(ny), indexing='ij')
+    ii, jj = np.meshgrid(np.arange(nx), np.arange(ny), indexing="ij")
     d_center = np.sqrt((ii - ci) ** 2 + (jj - cj) ** 2)
     all_d = []
     all_t = []
@@ -49,17 +55,17 @@ def _generate_stacking_plot(fn: str, data: np.ndarray):
     _max = np.nanmax(data, axis=0)
     count = np.sum(~np.isnan(data), axis=0)
 
-    fig = make_subplots(1, 4, subplot_titles=['Mean', 'Count', 'Max', 'T/D'])
+    fig = make_subplots(1, 4, subplot_titles=["Mean", "Count", "Max", "T/D"])
     fig.add_heatmap(z=mean.T, row=1, col=1, showscale=False)
     fig.add_heatmap(z=count.T, row=1, col=2, showscale=False)
     fig.add_heatmap(z=_max.T, row=1, col=3, showscale=False)
     _add_distance_to_mouth_data(fig, data, row=1, col=4)
-    fig.layout.yaxis.scaleanchor = 'x'
-    fig.layout.yaxis2.scaleanchor = 'x2'
-    fig.layout.yaxis3.scaleanchor = 'x3'
-    fig.layout.yaxis4.title = 'Thickness'
-    fig.layout.xaxis4.title = 'Distance to river mouth'
-    fig.write_html(fn + '.html')
+    fig.layout.yaxis.scaleanchor = "x"
+    fig.layout.yaxis2.scaleanchor = "x2"
+    fig.layout.yaxis3.scaleanchor = "x3"
+    fig.layout.yaxis4.title = "Thickness"
+    fig.layout.xaxis4.title = "Distance to river mouth"
+    fig.write_html(fn + ".html")
 
 
 def _add_distance_to_mouth_data(fig: go.Figure, data: np.ndarray, **kwargs):
@@ -84,9 +90,16 @@ def _add_distance_to_mouth_data(fig: go.Figure, data: np.ndarray, **kwargs):
             mean.append(np.mean(t))
 
     db = bins[1] - bins[0]
-    fig.add_scatter(x=dists, y=thicknesses, mode='markers', marker=dict(size=2), name='Raw Data', **kwargs)
-    common = dict(x=db / 2 + bins[:-1], width=db, offsetgroup='whatever', **kwargs)
-    fig.add_bar(y=q90, name='p<sub>90</sub>', **common)
-    fig.add_bar(y=mean, name='Mean', **common)
-    fig.add_bar(y=q50, name='p<sub>50</sub>', **common)
-    fig.add_bar(y=q10, name='p<sub>10</sub>', **common)
+    fig.add_scatter(
+        x=dists,
+        y=thicknesses,
+        mode="markers",
+        marker=dict(size=2),
+        name="Raw Data",
+        **kwargs
+    )
+    common = dict(x=db / 2 + bins[:-1], width=db, offsetgroup="whatever", **kwargs)
+    fig.add_bar(y=q90, name="p<sub>90</sub>", **common)
+    fig.add_bar(y=mean, name="Mean", **common)
+    fig.add_bar(y=q50, name="p<sub>50</sub>", **common)
+    fig.add_bar(y=q10, name="p<sub>10</sub>", **common)

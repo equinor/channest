@@ -9,7 +9,9 @@ import shapely.ops
 def _find_image_skeleton(poly):
     n0 = int(poly.bounds[2])
     n1 = int(poly.bounds[3])
-    full_set = shapely.geometry.MultiPoint([(i, j) for i in range(n0) for j in range(n1)])
+    full_set = shapely.geometry.MultiPoint(
+        [(i, j) for i in range(n0) for j in range(n1)]
+    )
     poly_set = full_set.intersection(poly)
     poly_map = np.zeros((n0, n1))
     idx = np.array(poly_set).astype(int)
@@ -22,11 +24,11 @@ def _find_neighbors(skel_map, b_ind):
     i = b_ind[0]
     j = b_ind[1]
     nb = []
-    dx = [-1,-1,-1,0,0,1,1,1]
-    dy = [-1,0,1,-1,1,-1,0,1]
+    dx = [-1, -1, -1, 0, 0, 1, 1, 1]
+    dy = [-1, 0, 1, -1, 1, -1, 0, 1]
     for k in range(8):
-        nei_x = i+dx[k]
-        nei_y = j+dy[k]
+        nei_x = i + dx[k]
+        nei_y = j + dy[k]
         if not 0 <= nei_x < skel_map.shape[0]:
             continue
         if not 0 <= nei_y < skel_map.shape[1]:
@@ -40,18 +42,18 @@ def _find_restricted_neighbours(skel_map, b_ind, r_ind):
     i = b_ind[0]
     j = b_ind[1]
     nb = []
-    dx = [-1,-1,-1,0,0,1,1,1]
-    dy = [-1,0,1,-1,1,-1,0,1]
+    dx = [-1, -1, -1, 0, 0, 1, 1, 1]
+    dy = [-1, 0, 1, -1, 1, -1, 0, 1]
     for k in range(8):
-        ic = i+dx[k]
-        jc = j+dy[k]
+        ic = i + dx[k]
+        jc = j + dy[k]
         if not 0 <= ic < skel_map.shape[0]:
             continue
         if not 0 <= jc < skel_map.shape[1]:
             continue
-        if abs(ic-r_ind[0]) > 1 or abs(jc-r_ind[1]) > 1:
-            if skel_map[i+dx[k],j+dy[k]] == 1:
-                nb = nb +[(i+dx[k],j+dy[k])]
+        if abs(ic - r_ind[0]) > 1 or abs(jc - r_ind[1]) > 1:
+            if skel_map[i + dx[k], j + dy[k]] == 1:
+                nb = nb + [(i + dx[k], j + dy[k])]
     return nb
 
 
@@ -123,6 +125,7 @@ class SkeletonizedPolygon:
     def main_channel(self) -> shapely.geometry.LineString:
         import scipy.sparse.csgraph as sc
         import scipy.sparse as ss
+
         # Create graph
         # Find longest shortest path
         # Convert to LineString
@@ -131,11 +134,9 @@ class SkeletonizedPolygon:
             return self._pieces[0]
         # Convert links to graph edges
         assert len(self._links) == len(self._pieces) + 1
-        edges = np.array([
-            (j, li + 1)
-            for j, link in enumerate(self._links)
-            for li in link
-        ])
+        edges = np.array(
+            [(j, li + 1) for j, link in enumerate(self._links) for li in link]
+        )
         rows = edges[:, 0]
         cols = edges[:, 1]
         # Extract graph edges lengths
@@ -143,8 +144,12 @@ class SkeletonizedPolygon:
         data = lengths[cols - 1]
         # Define graph as csc matrix and calculate shortest path from node 0. Node 0 is assumed to be the 'most
         # upstream' node of the channel. This is also why we perform a directed search.
-        g = ss.csc_matrix((data, (rows, cols)), shape=(len(self._links), len(self._links)))
-        path_lengths, predecessors = sc.dijkstra(g, directed=True, return_predecessors=True, indices=0)
+        g = ss.csc_matrix(
+            (data, (rows, cols)), shape=(len(self._links), len(self._links))
+        )
+        path_lengths, predecessors = sc.dijkstra(
+            g, directed=True, return_predecessors=True, indices=0
+        )
         path_lengths[np.isinf(path_lengths)] = 0.0  # In case there are inconsistencies
         # Reconstruct longest path
         im, jm = np.unravel_index(np.argmax(path_lengths), shape=g.shape)
