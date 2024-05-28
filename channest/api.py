@@ -87,6 +87,8 @@ def calculate_channel_parameters(
 
     - **z0** Starting layer for sampling in z-direction. Default is 0.
 
+    - **foreground_archel** Foreground archel to use for the estimation. Default is {"name": "channel", "value": 1}.
+
     #### Output-related parameters:
 
     - **generate_plots** Generate additional quality assessment plots. Default is False.
@@ -113,6 +115,9 @@ def calculate_channel_parameters(
     turn_off_filters = settings.get("turn_off_filters", [False])
     step_z = settings.get("step_z", 1)
     z0 = settings.get("z0", 0)
+    foreground_archel = settings.get(
+        "foreground_archel", {"name": "channel", "value": 1}
+    )
     cropbox = settings.get("cropbox", None)
     generate_plots = settings.get("generate_plots", False)
     generate_fences = settings.get("generate_fences", False)
@@ -155,7 +160,7 @@ def calculate_channel_parameters(
     # Core calculations
     results = []
     _cache = {}
-    raw_cube, pillars, grid_params = polygonize.create_cube(rq, box)
+    raw_cube, pillars, grid_params = polygonize.create_cube(rq, box, foreground_archel)
     assert np.isclose(
         grid_params.dx, grid_params.dy, atol=0.1
     )  # Algorithms are calibrated for dx == dy (aprx.)

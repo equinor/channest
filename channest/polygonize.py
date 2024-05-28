@@ -39,18 +39,21 @@ def smoothen_cube(c: Cube, width: int) -> Cube:
     return final
 
 
-def create_cube(r: ResQml, box: Optional[Box]) -> Tuple[Cube, Cube, GridParameters]:
+def create_cube(
+    r: ResQml, box: Optional[Box], foreground_archel: dict
+) -> Tuple[Cube, Cube, GridParameters]:
     from nrresqml.derivatives import dataextraction
 
     archel = dataextraction.extract_property(r, None, "archel", True)
-    channel = (np.array(archel) == 1).astype(float)
+    foreground_archel_value = foreground_archel["value"]
+    foreground = (np.array(archel) == foreground_archel_value).astype(float)
     ijk, xx, yy, pillars = dataextraction.extract_geometry(r, True, "kij")
     x0, y0 = xx[0, 0], yy[0, 0]
     dx = xx[1, 0] - xx[0, 0]
     dy = yy[0, 1] - yy[0, 0]
     if box is not None:
-        channel = dataextraction.crop_array(
-            channel, x0, y0, dx, dy, box.x0, box.y0, box.x1, box.y1
+        foreground = dataextraction.crop_array(
+            foreground, x0, y0, dx, dy, box.x0, box.y0, box.x1, box.y1
         )
         pillars = dataextraction.crop_array(
             pillars, x0, y0, dx, dy, box.x0, box.y0, box.x1, box.y1
@@ -58,7 +61,7 @@ def create_cube(r: ResQml, box: Optional[Box]) -> Tuple[Cube, Cube, GridParamete
     else:
         box = Box(np.min(xx), np.min(yy), np.max(xx), np.max(yy))
         pillars = np.array(pillars)
-    return channel, pillars, GridParameters(box, dx, dy)
+    return foreground, pillars, GridParameters(box, dx, dy)
 
 
 class HulledPolygons:
