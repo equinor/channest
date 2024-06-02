@@ -234,7 +234,14 @@ def calculate_channel_parameters(
     ) in progress(results, desc="Post-processing results"):
         post_fix = f"_{key.name()}" if len(results) > 1 else ""
         res = create_summary(
-            dxy, polys, poly_skels, poly_widths, flat_widths, poly_heights, flat_heights
+            dxy,
+            polys,
+            poly_skels,
+            poly_widths,
+            flat_widths,
+            poly_heights,
+            flat_heights,
+            foreground_archel["name"],
         )
         res["settings"] = settings
         o_sn = os.path.join(output_directory, f"summary{post_fix}.json")
