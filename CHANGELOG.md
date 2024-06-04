@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.1](https://github.com/equinor/channest/compare/v1.1.0...v1.1.1) (2024-06-04)
+
+
+### Bug Fixes
+
+* Updated numpy package, modified summary json format ([f63a623](https://github.com/equinor/channest/commit/f63a623a47d9c385f355fb9175af9dbd3103cc94))
+
 ## [1.1.0](https://github.com/equinor/channest/compare/v1.0.2...v1.1.0) (2024-06-04)
 
 
