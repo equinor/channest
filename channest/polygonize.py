@@ -31,33 +31,47 @@ class GridParameters:
 
 def smoothen_cube(c: Cube, width: int) -> Cube:
     if width != 1:
-        filt = np.ones(width, dtype=np.float).reshape((-1, 1, 1))
+        filt = np.ones(width, dtype=float).reshape((-1, 1, 1))
         filt /= np.abs(filt).sum()
-        final = ss.fftconvolve(c, filt, mode='same')
+        final = ss.fftconvolve(c, filt, mode="same")
     else:
         final = c
     return final
 
 
-def create_cube(r: ResQml, box: Optional[Box]) -> Tuple[Cube, Cube, GridParameters]:
+def create_cube(
+    r: ResQml, box: Optional[Box], foreground_archel: dict
+) -> Tuple[Cube, Cube, GridParameters]:
     from nrresqml.derivatives import dataextraction
-    archel = dataextraction.extract_property(r, None, 'archel', True)
-    channel = (np.array(archel) == 1).astype(np.float)
-    ijk, xx, yy, pillars = dataextraction.extract_geometry(r, True, 'kij')
+
+    archel = dataextraction.extract_property(r, None, "archel", True)
+    foreground_archel_value = foreground_archel["value"]
+    foreground = (np.array(archel) == foreground_archel_value).astype(float)
+    ijk, xx, yy, pillars = dataextraction.extract_geometry(r, True, "kij")
     x0, y0 = xx[0, 0], yy[0, 0]
     dx = xx[1, 0] - xx[0, 0]
     dy = yy[0, 1] - yy[0, 0]
     if box is not None:
-        channel = dataextraction.crop_array(channel, x0, y0, dx, dy, box.x0, box.y0, box.x1, box.y1)
-        pillars = dataextraction.crop_array(pillars, x0, y0, dx, dy, box.x0, box.y0, box.x1, box.y1)
+        foreground = dataextraction.crop_array(
+            foreground, x0, y0, dx, dy, box.x0, box.y0, box.x1, box.y1
+        )
+        pillars = dataextraction.crop_array(
+            pillars, x0, y0, dx, dy, box.x0, box.y0, box.x1, box.y1
+        )
     else:
         box = Box(np.min(xx), np.min(yy), np.max(xx), np.max(yy))
         pillars = np.array(pillars)
-    return channel, pillars, GridParameters(box, dx, dy)
+    return foreground, pillars, GridParameters(box, dx, dy)
 
 
 class HulledPolygons:
-    def __init__(self, map2d: np.ndarray, threshold: float, alpha: float, minimum_polygon_area: float):
+    def __init__(
+        self,
+        map2d: np.ndarray,
+        threshold: float,
+        alpha: float,
+        minimum_polygon_area: float,
+    ):
         assert map2d.ndim == 2
         self._map2d = map2d
         self._hulls = _poly_hull(map2d, threshold, alpha)
@@ -73,11 +87,17 @@ class HulledPolygons:
         return self._map2d
 
 
-def calculate_polygons(c: Cube, z_indexes: Union[np.ndarray, slice, None], threshold: float, alpha: float,
-                       minimum_polygon_area: float) -> List[HulledPolygons]:
+def calculate_polygons(
+    c: Cube,
+    z_indexes: Union[np.ndarray, slice, None],
+    threshold: float,
+    alpha: float,
+    minimum_polygon_area: float,
+) -> List[HulledPolygons]:
     sub_c = c[z_indexes, :, :]
     hulled_polys = [
-        HulledPolygons(_c, threshold, alpha, minimum_polygon_area) for _c in progress(sub_c, 'Calculating polygons')
+        HulledPolygons(_c, threshold, alpha, minimum_polygon_area)
+        for _c in progress(sub_c, "Calculating polygons")
     ]
     return hulled_polys
 
@@ -112,6 +132,7 @@ def _fast_alpha_hull(points, alpha) -> List[sg.Polygon]:
         points = sg.MultiPoint(list(points))
         return [sg.Polygon(points.convex_hull)]
     from scipy.spatial import Delaunay
+
     tri = Delaunay(points)
     # Filter points (similar approach as alphashape, except that it is done in batch by utilizing numpy instead of a
     # for-loop
@@ -124,20 +145,27 @@ def _fast_alpha_hull(points, alpha) -> List[sg.Polygon]:
 
     # Define a boolean array with shape (#Number of Delaunay triangles,). If __inc[i] is True, triangle i is kept and
     # will be used to generate the alpha polygon.
-    __inc = np.where(__area > 0, (__a * __b * __c) / (4.0 * np.sqrt(__area)) < 1.0 / alpha, False)
+    __inc = np.where(
+        __area > 0, (__a * __b * __c) / (4.0 * np.sqrt(__area)) < 1.0 / alpha, False
+    )
 
     # Copy and adjust the neighbor array from Delaunay so that the filtered triangles are excluded.
     __nb = tri.neighbors.copy()
     __nb[~__inc] = -1  # Set non-included triangles to have no neighbors
-    __nb[~np.isin(__nb, np.where(__inc))] = -1  # Deactivate non-included triangles as neighbors
+    __nb[~np.isin(__nb, np.where(__inc))] = (
+        -1
+    )  # Deactivate non-included triangles as neighbors
 
     # Determine the connected components based on the neighbor information
     __nb_edges = np.argwhere(__nb != -1)
     __nb_edges[:, 1] = __nb[__nb_edges[:, 0], __nb_edges[:, 1]]
     import scipy.sparse as ss
-    __nb_graph = ss.coo_matrix((
-        np.ones(__nb_edges.shape[0], dtype=np.int),
-        (__nb_edges[:, 0], __nb_edges[:, 1])),
+
+    __nb_graph = ss.coo_matrix(
+        (
+            np.ones(__nb_edges.shape[0], dtype=int),
+            (__nb_edges[:, 0], __nb_edges[:, 1]),
+        ),
         shape=(__nb.shape[0], __nb.shape[0]),
     )
     # __cc.size will equal the number of triangles in the Delaunay triangulation. Further, __cc[i] corresponds to the
@@ -164,7 +192,7 @@ def _fast_alpha_hull(points, alpha) -> List[sg.Polygon]:
         __comp_nn = __nb[__single & (__cc == __comp)]
         if __comp_nn.size == 0:
             # There are no 'single edge triangles' for this component
-            __e0 = __e1 = np.empty((0,), dtype=np.int)
+            __e0 = __e1 = np.empty((0,), dtype=int)
         else:
             __c0 = np.where(__comp_nn == -1)[1]
             __comp_v = tri.simplices[__single & (__cc == __comp)]
@@ -176,7 +204,7 @@ def _fast_alpha_hull(points, alpha) -> List[sg.Polygon]:
         # boundary edge.
         __comp_dd = __nb[__double & (__cc == __comp)]
         if __comp_dd.size == 0:
-            __f0 = __f1 = __g0 = __g1 = np.empty((0,), dtype=np.int)
+            __f0 = __f1 = __g0 = __g1 = np.empty((0,), dtype=int)
         else:
             __comp_vv = tri.simplices[__double & (__cc == __comp)]
             __c0 = np.where(__comp_dd == -1)[1]
@@ -212,7 +240,9 @@ def _fast_alpha_hull(points, alpha) -> List[sg.Polygon]:
 
         # Calculate the shortest path from the vertex __rm to all other edges on the boundary. Shortest in the sense of
         # number of edges, not Euclidean distance
-        __predec = ss.csgraph.dijkstra(__g, unweighted=True, indices=__h1[__rm], return_predecessors=True)[1]
+        __predec = ss.csgraph.dijkstra(
+            __g, unweighted=True, indices=__h1[__rm], return_predecessors=True
+        )[1]
         # The 'right-most' vertex picked above should have one, and only one, edge to it, namely the edge going from
         # __h0[__rm] to __h1[__rm]. By reconstructing the shortest path from __h1[__rm] to __h0[__rm], we should
         # retrieve the boundary of the filtered triangulation, without any self-intersections, as self-intersections
@@ -254,7 +284,9 @@ def _remove_small_polygons(polys, min_area):
     return [p for p in polys if p.area > min_area]
 
 
-def _punch_holes(map2d: np.ndarray, poly: sg.Polygon, threshold: float, alpha: float) -> sg.Polygon:
+def _punch_holes(
+    map2d: np.ndarray, poly: sg.Polygon, threshold: float, alpha: float
+) -> sg.Polygon:
     """
     Currently not in use since it introduces another parameter: threshold for hole area (0.1 below). It is not clear
     that it provides value beyond adjusting the existing input parameters, and thus only introduces more uncertainty.
@@ -263,9 +295,11 @@ def _punch_holes(map2d: np.ndarray, poly: sg.Polygon, threshold: float, alpha: f
 
     Delete this function later if it is never used (see git log for age)
     """
-    mp = sg.MultiPoint([(i, j) for i in range(map2d.shape[0]) for j in range(map2d.shape[1])])
+    mp = sg.MultiPoint(
+        [(i, j) for i in range(map2d.shape[0]) for j in range(map2d.shape[1])]
+    )
     inner_map = np.zeros_like(map2d)
-    idx = np.array(poly.intersection(mp), dtype=np.int)
+    idx = np.array(poly.intersection(mp), dtype=int)
     inner_map[idx[:, 0], idx[:, 1]] = 1.0 - map2d[idx[:, 0], idx[:, 1]]
     inner_holes = _poly_hull(inner_map, 1.0 - threshold, alpha)
     large_inner_holes = [ih for ih in inner_holes if ih.area > 0.1 * poly.area]
@@ -281,15 +315,21 @@ def _punch_holes(map2d: np.ndarray, poly: sg.Polygon, threshold: float, alpha: f
     if len(large_inner_holes) == 0:
         return poly
     else:
-        new_poly = sg.Polygon(np.array(poly.exterior), [p.exterior for p in large_inner_holes])
+        new_poly = sg.Polygon(
+            np.array(poly.exterior), [p.exterior for p in large_inner_holes]
+        )
         if not isinstance(new_poly, sg.Polygon):
             print(
-                'Polygon type changed after removing holes. This is not intended, using the original polygon instead.'
+                "Polygon type changed after removing holes. This is not intended, using the original polygon instead."
             )
             return poly
         if new_poly.is_valid is False:
-            print('Polygon not valid after removing holes. Using the original polygon instead')
+            print(
+                "Polygon not valid after removing holes. Using the original polygon instead"
+            )
             return poly
-        print(f'Removed {len(large_inner_holes)} holes from polyogon. Area diff: {poly.area} - '
-              f'{sum([ih.area for ih in large_inner_holes])}')
+        print(
+            f"Removed {len(large_inner_holes)} holes from polyogon. Area diff: {poly.area} - "
+            f"{sum([ih.area for ih in large_inner_holes])}"
+        )
         return new_poly
