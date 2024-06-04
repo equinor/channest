@@ -41,8 +41,8 @@ def summary_stats(observations: np.ndarray[float]) -> Dict[str, Any]:
         "mean": mu,
         "sd": sigma,
         "count": n,
-        "coefficient of variation": sigma / mu,
-        "mean estimate standard error": sigma / np.sqrt(n),
+        "coefficient-of-variation": sigma / mu,
+        "mean-estimate-standard-error": sigma / np.sqrt(n),
         "min": np.min(observations),
         "max": np.max(observations),
         "percentiles": {
