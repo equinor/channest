@@ -3,6 +3,7 @@ from typing import List, Dict, Any
 
 from channest.heights import LayerHeights
 from channest.widths import LayerWidths, Widths
+from channest.lengths import LayerLengths
 from channest.polygonize import HulledPolygons
 from channest.skeletonize import SkeletonizedLayer
 from nrresqml.resqml import ResQml
@@ -16,6 +17,7 @@ def create_summary(
     flat_widths: List[Widths],
     poly_heights: List[LayerHeights],
     flat_heights: np.ndarray,
+    poly_lengths: List[LayerLengths],
     archel_name: str = "channel",
 ) -> Dict[str, Any]:
     return _calculate_results(
@@ -26,6 +28,7 @@ def create_summary(
         flat_widths,
         poly_heights,
         flat_heights,
+        poly_lengths,
         archel_name,
     )
 
@@ -60,6 +63,7 @@ def _calculate_results(
     flat_widths: List[Widths],
     poly_heights: List[LayerHeights],
     flat_heights: np.ndarray,
+    poly_lengths: List[LayerLengths],
     archel_name: str,
 ) -> Dict[str, Any]:
     results = {}
@@ -112,5 +116,9 @@ def _calculate_results(
                 "mode-sd": np.nanstd(mode_per_channel),
             }
         )
+
+    # Channel lengths
+    lengths_per_channel = np.hstack([l.lengths for l in poly_lengths])
+    results[archel_name + "-length"] = summary_stats(lengths_per_channel * dxy)
 
     return results

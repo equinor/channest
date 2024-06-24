@@ -12,7 +12,7 @@ from channest.qc.scatterwidthheight import create_width_height_scatter
 from channest.summarize import create_summary
 from nrresqml.resqml import ResQml
 from typing import Any, Dict, Optional, Union
-from channest import polygonize, skeletonize, widths, heights
+from channest import polygonize, skeletonize, widths, heights, lengths
 from channest.qc import fences, sliceplot, stacking
 
 
@@ -211,9 +211,26 @@ def calculate_channel_parameters(
         ]
         flat_heights = np.hstack([ph.flat_values() for ph in poly_heights])
 
+        # Lengths
+        poly_lengths = [
+            lengths.LayerLengths(_sp, _p.map2d, s.mean_map_threshold)
+            for _p, _sp in progress(
+                zip(polys, poly_skels), desc="Calculating lengths", total=len(polys)
+            )
+        ]
+
         # Append to results
         results.append(
-            (s, polys, poly_skels, poly_widths, flat_widths, poly_heights, flat_heights)
+            (
+                s,
+                polys,
+                poly_skels,
+                poly_widths,
+                flat_widths,
+                poly_heights,
+                flat_heights,
+                poly_lengths,
+            )
         )
 
     # Dump pickle file
@@ -231,6 +248,7 @@ def calculate_channel_parameters(
         flat_widths,
         poly_heights,
         flat_heights,
+        poly_lengths,
     ) in progress(results, desc="Post-processing results"):
         post_fix = f"_{key.name()}" if len(results) > 1 else ""
         res = create_summary(
@@ -241,6 +259,7 @@ def calculate_channel_parameters(
             flat_widths,
             poly_heights,
             flat_heights,
+            poly_lengths,
             foreground_archel["name"],
         )
         res["settings"] = settings
