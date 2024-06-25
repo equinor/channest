@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/equinor/channest/compare/v1.0.2...v1.1.0) (2024-06-04)
+
+
+### Features
+
+* Let user choose foreground architectural element, give more comprehensive summary statistics ([#5](https://github.com/equinor/channest/issues/5)) ([50fab65](https://github.com/equinor/channest/commit/50fab6561b6c3a30a978b1d3580a336ad33db267))
+
 ## [1.0.2](https://github.com/equinor/channest/compare/v1.0.1...v1.0.2) (2024-01-15)
 
 
