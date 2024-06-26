@@ -7,12 +7,23 @@ from channest.skeletonize import SkeletonizedPolygon, SkeletonizedLayer
 
 class LayerLengths:
     def __init__(
-        self, sl: SkeletonizedLayer, map2d: np.ndarray, mean_map_threshold: float
+        self,
+        sl: SkeletonizedLayer,
+        map2d: np.ndarray,
+        mean_map_threshold: float,
+        method: str = "skeleton",
     ):
-        self._lengths = [
-            _find_skeleton_length(p, map2d, mean_map_threshold)
-            for p in sl.skeletonized_polygons
-        ]
+        if method == "skeleton":
+            self._lengths = [
+                _find_skeleton_length(p, map2d, mean_map_threshold)
+                for p in sl.skeletonized_polygons
+            ]
+        elif method == "box":
+            self._lengths = [
+                _find_bounding_box_length(p.polygon) for p in sl.skeletonized_polygons
+            ]
+        else:
+            raise ValueError(f"'method' must be 'skeleton' or 'box', not {method}")
 
     @property
     def lengths(self):
@@ -72,3 +83,12 @@ def _find_skeleton_length(
         accumulated_length += np.sqrt(dx**2 + dy**2)
 
     return accumulated_length
+
+
+def _find_bounding_box_length(po: sg.Polygon) -> float:
+    mbr_points = list(zip(*po.minimum_rotated_rectangle.exterior.coords.xy))
+    mbr_lengths = [
+        sg.LineString((mbr_points[i], mbr_points[i + 1])).length
+        for i in range(len(mbr_points) - 1)
+    ]
+    return max(mbr_lengths)

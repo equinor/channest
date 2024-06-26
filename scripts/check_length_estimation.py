@@ -4,7 +4,7 @@ import shapely.geometry
 import tqdm
 
 from channest.skeletonize import SkeletonizedPolygon
-from channest.lengths import _find_skeleton_length
+from channest.lengths import _find_skeleton_length, _find_bounding_box_length
 
 
 class RandomEllipse:
@@ -70,7 +70,7 @@ class RandomRectangle:
 def main():
     n = 40
     n_objects = 1000
-    object_type = "rectangle"
+    object_type = "ellipse"
     objects = []
 
     if object_type == "rectangle":
@@ -94,8 +94,9 @@ def main():
         try:
             coord_pairs = object.coord_pairs()
             polygon = shapely.geometry.Polygon(coord_pairs)
-            skeleton = SkeletonizedPolygon(polygon)
-            length_estimate = _find_skeleton_length(skeleton, None, threshold)
+            # skeleton = SkeletonizedPolygon(polygon)
+            # length_estimate = _find_skeleton_length(skeleton, None, threshold)
+            length_estimate = _find_bounding_box_length(polygon)
         except:
             length_estimate = np.nan
         finally:

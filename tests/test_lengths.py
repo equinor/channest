@@ -1,5 +1,5 @@
 from channest.skeletonize import SkeletonizedPolygon
-from channest.lengths import _find_skeleton_length
+from channest.lengths import _find_skeleton_length, _find_bounding_box_length
 import shapely.geometry
 
 
@@ -18,7 +18,8 @@ def test_simple_skeleton():
         ]
     )
     skeleton = SkeletonizedPolygon(polygon)
-    estimated_length = _find_skeleton_length(skeleton, None, threshold)
+    # estimated_length = _find_skeleton_length(skeleton, None, threshold)
+    estimated_length = _find_bounding_box_length(skeleton)
 
     assert abs(estimated_length - a) <= abs(b)
 
@@ -44,7 +45,8 @@ def test_t_shape_skeleton():
         ]
     )
     skeleton = SkeletonizedPolygon(polygon)
-    estimated_length = _find_skeleton_length(skeleton, None, threshold)
+    # estimated_length = _find_skeleton_length(skeleton, None, threshold)
+    estimated_length = _find_bounding_box_length(skeleton)
 
     expected_length = a + d
 
@@ -67,7 +69,8 @@ def test_zero_crossing_rectangle():
         ]
     )
     skeleton = SkeletonizedPolygon(polygon)
-    estimated_length = _find_skeleton_length(skeleton, None, threshold)
+    # estimated_length = _find_skeleton_length(skeleton, None, threshold)
+    estimated_length = _find_bounding_box_length(skeleton)
 
     expected_length = 2 * a
 

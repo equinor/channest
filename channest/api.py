@@ -213,7 +213,7 @@ def calculate_channel_parameters(
 
         # Lengths
         poly_lengths = [
-            lengths.LayerLengths(_sp, _p.map2d, s.mean_map_threshold)
+            lengths.LayerLengths(_sp, _p.map2d, s.mean_map_threshold, method="box")
             for _p, _sp in progress(
                 zip(polys, poly_skels), desc="Calculating lengths", total=len(polys)
             )
