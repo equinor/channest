@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/equinor/channest/compare/v1.1.1...v1.2.0) (2024-07-02)
+
+
+### Features
+
+* Add object length estimation ([#8](https://github.com/equinor/channest/issues/8)) ([5a72d8e](https://github.com/equinor/channest/commit/5a72d8e66fed637c4517e9c303d7007d9b9b45d7))
+
 ## [1.1.1](https://github.com/equinor/channest/compare/v1.1.0...v1.1.1) (2024-06-04)
 
 
