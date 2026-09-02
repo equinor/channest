@@ -1,3 +1,5 @@
+[![SCM Compliance](https://scm-compliance-api.radix.equinor.com/repos/equinor/4024c362-a376-43ee-a974-a071f1bb158b/badge)](https://scm-compliance-api.radix.equinor.com/repos/equinor/4024c362-a376-43ee-a974-a071f1bb158b/badge)
+
 This package estimates channel parameters from Delft3D-based RESQML models. The repository is tightly linked with https://github.com/NorskRegnesentral/nrresqml 
 
 The main function is
